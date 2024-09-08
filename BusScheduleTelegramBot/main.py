@@ -121,7 +121,7 @@ def bus_324_schedule(chat):
         today = datetime.today().weekday()
         if today in [5, 6]:
             schedule = bus_schedule_324_weekend
-            header = f"-----<b>324(Вихідний)</b>-----\n{'З Процеву':<16} {'З Києва':<12}"
+            header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<16} {'З Києва':<12}"
         else:
             schedule = bus_schedule_324
             header = f"----------<b>324</b>----------\n{'З Процеву':<16} {'З Києва':<12}"
@@ -145,7 +145,7 @@ def bus_324_schedule(chat):
         global request_count
         request_count += 1
         schedule = bus_schedule_324_weekend
-        header = f"-----<b>324(Вихідний)</b>-----\n{'З Процеву':<16} {'З Києва':<12}"
+        header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<16} {'З Києва':<12}"
         col_width = max(len(item) for sublist in schedule for item in sublist) + 2
         formatted_schedule = [f"{header:<{col_width + 30}}"]
         for row in zip(*schedule):
@@ -198,12 +198,14 @@ def full_schedule(chat):
 
         if today in [5, 6]:
             schedule_324 = bus_schedule_324_weekend
+            header_324 = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<16} {'З Києва':<12}"
         else:
             schedule_324 = bus_schedule_324
+            header_324 = f"----------<b>324</b>----------\n{'З Процеву':<16} {'З Києва':<12}"
 
-        header = f"------------<b>941</b>------------\n{'З Воронькову':<16} {'З Києва':<12}"
+        header_941 = f"------------<b>941</b>------------\n{'З Воронькову':<16} {'З Києва':<12}"
         col_width = max(len(item) for sublist in bus_schedule_941 for item in sublist) + 2
-        formatted_schedule = [f"{header:<{col_width + 30}}"]
+        formatted_schedule = [f"{header_941:<{col_width + 30}}"]
         for row in zip(*bus_schedule_941):
             if not row[0].strip():
                 formatted_schedule.append(f"{' ' * 31}{row[1]:<{col_width}}")
@@ -211,9 +213,8 @@ def full_schedule(chat):
                 formatted_schedule.append(f"{row[0]:<{col_width + 19}}{row[1]:<{col_width}}")
         formatted_schedule_941_res = "\n".join(formatted_schedule)
 
-        header = f"----------<b>324</b>----------\n{'З Процеву':<16} {'З Києва':<12}"
         col_width = max(len(item) for sublist in schedule_324 for item in sublist) + 2
-        formatted_schedule = [f"{header:<{col_width + 30}}"]
+        formatted_schedule = [f"{header_324:<{col_width + 30}}"]
 
         for row in zip(*schedule_324):
             if not row[0].strip():
