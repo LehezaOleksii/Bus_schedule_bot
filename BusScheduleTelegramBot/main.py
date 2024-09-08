@@ -3,6 +3,7 @@ from telebot import types
 from datetime import datetime, timedelta
 import pandas as pd
 from io import BytesIO
+import pytz
 
 bot = telebot.TeleBot('7052131672:AAHEs6hOG_27apuoHFVyq81CdfXPn_Yx_WI')
 ADMIN_ID = 818757464
@@ -233,7 +234,8 @@ def next_buses(chat):
     try:
         global request_count
         request_count += 1
-        now = datetime.now().time()
+        kyiv_tz = pytz.timezone('Europe/Kiev')
+        now = datetime.now(kyiv_tz)
         today = datetime.today().weekday()
         if today in [5, 6]:
             schedule_324 = bus_schedule_324_weekend
@@ -269,7 +271,7 @@ def next_buses(chat):
         combined_schedule = "\n".join([
             f"{protsiv_line:<24} {kyiv_line if not protsiv_line.endswith('941') else ' ' + kyiv_line}"
             if protsiv_line.strip()
-            else f"{'':<28} {kyiv_line}"
+            else f"{' ':<33} {kyiv_line}"
             for protsiv_line, kyiv_line in zip(formatted_protsiv_lines, formatted_kyiv_lines)
         ])
 
@@ -288,12 +290,18 @@ def parse_time(time_str):
 def format_time(time_obj):
     return time_obj.strftime("%H:%M")
 
-
 def get_upcoming_buses(current_time, schedule):
-    cutoff_time = (datetime.combine(datetime.today(), current_time) + timedelta(hours=2)).time()
+    def parse_time(time_str):
+        return datetime.strptime(time_str, "%H:%M").time()
+    kyiv_tz = pytz.timezone('Europe/Kiev')
+    now = datetime.now(kyiv_tz)
+    current_time_kyiv = now.replace(hour=current_time.hour, minute=current_time.minute, second=0, microsecond=0)
+    cutoff_time = current_time_kyiv + timedelta(hours=2)
+    current_time_only = current_time_kyiv.time()
+    cutoff_time_only = cutoff_time.time()
     upcoming_buses = [
         time for time in schedule
-        if time and parse_time(time) > current_time and parse_time(time) <= cutoff_time
+        if time and parse_time(time) > current_time_only and parse_time(time) <= cutoff_time_only
     ]
     return sorted(upcoming_buses, key=parse_time)
 
