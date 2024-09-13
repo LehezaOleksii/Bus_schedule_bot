@@ -19,6 +19,32 @@ bus_schedule_324 = [
 
 bus_schedule_324_weekend = [
 ]
+def initialize_schedules():
+    global bus_schedule_941, bus_schedule_324, bus_schedule_324_weekend
+    try:
+        #Local
+        # file_path = r'C:\Users\Legza Aleksey\Desktop\Университет\Работа\Programing\bots\bus schedule\BusScheduleTelegramBot\schedules.xlsx'
+        #pythonanywhere
+        file_path = '/home/OleksiiLeheza12/bot/schedules.xlsx'
+        df = pd.read_excel(file_path, sheet_name=None)
+
+        bus_schedule_941_df = df['941']
+        bus_schedule_324_df = df['324_weekday']
+        bus_schedule_324_weekend_df = df['324_weekend']
+
+        bus_schedule_941 = [clean_row(row) for row in bus_schedule_941_df.values.tolist()]
+        bus_schedule_324 = [clean_row(row) for row in bus_schedule_324_df.values.tolist()]
+        bus_schedule_324_weekend = [clean_row(row) for row in bus_schedule_324_weekend_df.values.tolist()]
+
+        print("Schedules initialized successfully.")
+    except Exception as e:
+        print(f"Error initializing schedules: {e}")
+
+def clean_row(row):
+    return [value if not pd.isna(value) else '' for value in row]
+
+# Initialize schedules when the bot starts
+initialize_schedules()
 
 @bot.message_handler(commands=['change_schedule'])
 def change_schedule(chat):
@@ -29,7 +55,7 @@ def change_schedule(chat):
             btn_324_weekday = types.KeyboardButton('324 weekday')
             btn_324_weekend = types.KeyboardButton('324 weekend')
             markup.add(btn_941, btn_324_weekday, btn_324_weekend)
-            bot.send_message(chat.chat.id, "Оберіть маршрут, для якого бажаєту змінити розклад:", reply_markup=markup)
+            bot.send_message(chat.chat.id, "Оберіть маршрут, для якого бажаєте змінити розклад:", reply_markup=markup)
         else:
             bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди.")
     except Exception as e:
@@ -41,7 +67,7 @@ def route_selected(chat):
         if chat.from_user.id == ADMIN_ID:
             global current_route
             current_route = chat.text
-            bot.send_message(chat.chat.id, f"Ви обрали {current_route}. Тепер завантажту Excel файл з розкладом.")
+            bot.send_message(chat.chat.id, f"Ви обрали {current_route}. Тепер завантажте Excel файл з розкладом.")
         else:
             bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди.")
     except Exception as e:
@@ -65,7 +91,7 @@ def handle_document(chat):
 
             current_route = None
         else:
-            bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди або маршрут не обран.")
+            bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди або маршрут не обрано.")
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при оновлені даних при роботі з документами: {e}")
 
