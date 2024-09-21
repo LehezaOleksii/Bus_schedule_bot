@@ -5,6 +5,8 @@ import pandas as pd
 from io import BytesIO
 import pytz
 import re
+import signal
+
 
 bot = telebot.TeleBot('7052131672:AAHEs6hOG_27apuoHFVyq81CdfXPn_Yx_WI')
 ADMIN_ID = 818757464
@@ -138,6 +140,27 @@ def start(chat):
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка: {e}")
 
+def format_schedule(header, schedule, max_col_width):
+    formatted_schedule = [f"{header}"]
+    print(max_col_width)
+    for row in zip(*schedule):
+        if not row[0].strip():
+            print('\nIF')
+            current_length = len(row[1])
+            print(current_length)
+            spaces_needed = max_col_width - current_length
+            print(spaces_needed)
+            formatted_schedule.append(f"{' ' * max(spaces_needed, 0)}{row[1]:<{max_col_width}}")
+        else:
+            print('\nELSE')
+            current_length = len(row[0])
+            print(current_length)
+            spaces_needed = max_col_width - current_length
+            print(spaces_needed)
+            formatted_schedule.append(f"{row[0]:<{max_col_width}}{' ' * max(spaces_needed, 0)}{row[1]:<{max_col_width}}")
+
+    return "\n".join(formatted_schedule)
+
 @bot.message_handler(commands=['bus_941'])
 def bus_941_schedule(chat):
     try:
@@ -145,17 +168,11 @@ def bus_941_schedule(chat):
         request_count += 1
         schedule = bus_schedule_941
         header = f"------------<b>941</b>------------\n{'З Воронькову':<16} {'З Києва':<12}"
-        col_width = max(len(item) for sublist in schedule for item in sublist) + 2
-        formatted_schedule = [f"{header:<{col_width + 30}}"]
-        for row in zip(*schedule):
-            if not row[0].strip():
-                formatted_schedule.append(f"{' ' * 31}{row[1]:<{col_width}}")
-            else:
-                formatted_schedule.append(f"{row[0]:<{col_width + 19}}{row[1]:<{col_width}}")
-        formatted_schedule_res = "\n".join(formatted_schedule)
+        formatted_schedule_res = format_schedule(header, schedule, max_col_width=16)
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}", parse_mode='HTML')
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 941: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виконанні запиту до розкладу автобусу 941: {e}")
+
 
 @bot.message_handler(commands=['bus_324'])
 def bus_324_schedule(chat):
@@ -163,25 +180,22 @@ def bus_324_schedule(chat):
         global request_count
         request_count += 1
         today = datetime.today().weekday()
+        spaces_between_max_col_width_and_second_col = 0
+        max_col_width = 0
         if today in [5, 6]:
             schedule = bus_schedule_324_weekend
-            header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<16} {'З Києва':<12}"
+            max_col_width = max(len(item) for sublist in schedule for item in sublist) + spaces_between_max_col_width_and_second_col+2
+            header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<{max_col_width}} {'З Києва':<{max_col_width}}"
         else:
             schedule = bus_schedule_324
-            header = f"----------<b>324</b>----------\n{'З Процеву':<16} {'З Києва':<12}"
+            max_col_width = max(len(item) for sublist in schedule for item in sublist) + spaces_between_max_col_width_and_second_col+2
+            header = f"----------<b>324</b>----------\n{'З Процеву':<{max_col_width}} {'З Києва':<{max_col_width}}"
 
-        col_width = max(len(item) for sublist in schedule for item in sublist) + 2
-        formatted_schedule = [f"{header:<{col_width + 30}}"]
-        for row in zip(*schedule):
-            if not row[0].strip():
-                formatted_schedule.append(f"{' ' * 28}{row[1]:<{col_width}}")
-            else:
-                formatted_schedule.append(f"{row[0]:<{col_width + 16}}{row[1]:<{col_width}}")
-        formatted_schedule_res = "\n".join(formatted_schedule)
+        formatted_schedule_res = format_schedule(header, schedule, max_col_width)
         link = "\n\nПосилання на сайт: http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/"
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}{link}", parse_mode='HTML')
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 941: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виконанні запиту до розкладу автобусу 324: {e}")
 
 @bot.message_handler(commands=['bus_324_weekend'])
 def bus_324_schedule(chat):
@@ -202,14 +216,6 @@ def bus_324_schedule(chat):
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}\n{link}", parse_mode='HTML')
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 weekend: {e}")
-
-
-def format_schedule(header, schedule):
-    col_width = max(len(item) for sublist in schedule for item in sublist) + 2
-    formatted_schedule = [f"{header:<{col_width + 30}}"]
-    for row in zip(*schedule):
-        formatted_schedule.append(f"{row[0]:<{col_width + 20}}{row[1]:<{col_width}}")
-    return "\n".join(formatted_schedule)
 
 @bot.message_handler(commands=['bus_324_weekday'])
 def bus_324_schedule_weekday(chat):
@@ -401,4 +407,13 @@ def show_statistics(chat):
         bot.send_message(chat.chat.id, f"Помилка при виведені статистики клієнтів: {e}")
 
 initialize_schedules()
+
+def send_shutdown_message():
+    bot.send_message(chat_id=ADMIN_ID, text="The bot has been shut down.")
+
+def signal_handler(sig, frame):
+    send_shutdown_message()
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 bot.infinity_polling()
