@@ -432,7 +432,7 @@ def show_statistics(chat):
                 most_used_command = max(data['commands'], key=data['commands'].get) if data['commands'] else "None"
                 most_used_count = data['commands'].get(most_used_command, 0) if most_used_command != "None" else 0
                 response += (f"- {data['username']} (ID: {user_id}): {data['count']} запитів, "
-                             f"Улюблений запит: {most_used_command} (використно {most_used_count} рази)\n")
+                             f"Улюблений запит: {most_used_command} ({most_used_count} рази)\n")
 
             response += "\nСтатистика по запитам:\n"
             for command, count in command_requests.items():
