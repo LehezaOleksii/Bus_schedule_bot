@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from io import BytesIO
 import pytz
+import re
 
 bot = telebot.TeleBot('7052131672:AAHEs6hOG_27apuoHFVyq81CdfXPn_Yx_WI')
 ADMIN_ID = 818757464
@@ -19,13 +20,33 @@ bus_schedule_324 = [
 
 bus_schedule_324_weekend = [
 ]
+
+class BusInfo:
+    def __init__(self, text):
+        match = re.match(r'(\d{1,2}:\d{2})\s*\((.*?)\)', text)
+        if match:
+            time_str, self.description = match.groups()
+        else:
+            time_str = re.match(r'(\d{1,2}:\d{2})', text).group(1)
+            self.description = ""
+
+        self.time = datetime.strptime(time_str, "%H:%M").time()
+
+    def __lt__(self, other):
+        return self.time < other.time
+
+    def __str__(self):
+        if self.description:
+            return f"{self.time.strftime('%H:%M')} ({self.description})"
+        return f"{self.time.strftime('%H:%M')}"
+
 def initialize_schedules():
     global bus_schedule_941, bus_schedule_324, bus_schedule_324_weekend
     try:
         #Local
-        # file_path = r'C:\Users\Legza Aleksey\Desktop\Университет\Работа\Programing\bots\bus schedule\BusScheduleTelegramBot\schedules.xlsx'
+        file_path = r'C:\Users\serge\Oleksii\university\bots\bus_schedule\schedules.xlsx'
         #pythonanywhere
-        file_path = '/home/OleksiiLeheza12/bot/schedules.xlsx'
+        # file_path = '/home/OleksiiLeheza12/bot/schedules.xlsx'
         df = pd.read_excel(file_path, sheet_name=None)
 
         bus_schedule_941_df = df['941']
@@ -42,9 +63,6 @@ def initialize_schedules():
 
 def clean_row(row):
     return [value if not pd.isna(value) else '' for value in row]
-
-# Initialize schedules when the bot starts
-initialize_schedules()
 
 @bot.message_handler(commands=['change_schedule'])
 def change_schedule(chat):
@@ -264,37 +282,51 @@ def next_buses(chat):
         kyiv_tz = pytz.timezone('Europe/Kiev')
         now = datetime.now(kyiv_tz)
         today = datetime.today().weekday()
-        if today in [5, 6]:
+
+        # Вибираємо відповідний розклад для 324 в залежності від дня тижня
+        if today in [5, 6]:  # Якщо це субота чи неділя
             schedule_324 = bus_schedule_324_weekend
         else:
             schedule_324 = bus_schedule_324
 
         schedule_941 = bus_schedule_941
-        upcoming_941_kyiv = get_upcoming_buses(now,schedule_941[1])
+
+        # Отримуємо найближчі автобуси для кожного маршруту
+        upcoming_941_kyiv = get_upcoming_buses(now, schedule_941[1])
         upcoming_941_vornykiv = get_upcoming_buses(now, schedule_941[0])
         upcoming_324_kyiv = get_upcoming_buses(now, schedule_324[1])
         upcoming_324_protsiv = get_upcoming_buses(now, schedule_324[0])
 
+        # Сортуємо автобуси для Києва та Проціву
         kyiv_buses = sorted(
-            [(parse_time(time), '324') for time in upcoming_324_kyiv] +
-            [(parse_time(time), '941') for time in upcoming_941_kyiv],
+            [(bus.time, '324', bus.description) for bus in upcoming_324_kyiv] +
+            [(bus.time, '941', bus.description) for bus in upcoming_941_kyiv],
             key=lambda x: x[0]
         )
 
         protsiv_buses = sorted(
-            [(parse_time(time), '324') for time in upcoming_324_protsiv] +
-            [(parse_time(time), '941') for time in upcoming_941_vornykiv],
+            [(bus.time, '324', bus.description) for bus in upcoming_324_protsiv] +
+            [(bus.time, '941', bus.description) for bus in upcoming_941_vornykiv],
             key=lambda x: x[0]
         )
 
+        # Формуємо повідомлення для відправки
         header = "-----<b>Найближчі автобуси</b>-----\n"
-        formatted_kyiv = "\n".join([f"{format_time(time)} {route}" for time, route in kyiv_buses])
-        formatted_protsiv = "\n".join([f"{format_time(time)} {route}" for time, route in protsiv_buses])
+        formatted_kyiv = "\n".join([
+            f"{bus_time.strftime('%H:%M')} - {route} {f'({description})' if description else ''}"
+            for bus_time, route, description in kyiv_buses
+        ])
 
+        formatted_protsiv = "\n".join([
+            f"{bus_time.strftime('%H:%M')} - {route} {f'({description})' if description else ''}"
+            for bus_time, route, description in protsiv_buses
+        ])
+        # Додаємо порожні строки для вирівнювання, якщо списки різної довжини
         max_lines = max(len(formatted_kyiv.split("\n")), len(formatted_protsiv.split("\n")))
         formatted_kyiv_lines = formatted_kyiv.split("\n") + [""] * (max_lines - len(formatted_kyiv.split("\n")))
         formatted_protsiv_lines = formatted_protsiv.split("\n") + [""] * (max_lines - len(formatted_protsiv.split("\n")))
 
+        # Об'єднуємо строки для відправки
         combined_schedule = "\n".join([
             f"{protsiv_line:<24} {kyiv_line if not protsiv_line.endswith('941') else ' ' + kyiv_line}"
             if protsiv_line.strip()
@@ -302,7 +334,10 @@ def next_buses(chat):
             for protsiv_line, kyiv_line in zip(formatted_protsiv_lines, formatted_kyiv_lines)
         ])
 
+        # Додаємо посилання
         link = "\n\nПосилання на сайт для 324: http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/"
+
+        # Відправляємо повідомлення
         bot.send_message(
             chat.chat.id,
             f"{header}\n<b>З Села</b>                     <b>З Києва</b>\n{combined_schedule}{link}",
@@ -317,20 +352,32 @@ def parse_time(time_str):
 def format_time(time_obj):
     return time_obj.strftime("%H:%M")
 
+
 def get_upcoming_buses(current_time, schedule):
-    def parse_time(time_str):
-        return datetime.strptime(time_str, "%H:%M").time()
     kyiv_tz = pytz.timezone('Europe/Kiev')
     now = datetime.now(kyiv_tz)
     current_time_kyiv = now.replace(hour=current_time.hour, minute=current_time.minute, second=0, microsecond=0)
     cutoff_time = current_time_kyiv + timedelta(hours=2)
+
     current_time_only = current_time_kyiv.time()
     cutoff_time_only = cutoff_time.time()
-    upcoming_buses = [
-        time for time in schedule
-        if time and parse_time(time) > current_time_only and parse_time(time) <= cutoff_time_only
-    ]
-    return sorted(upcoming_buses, key=parse_time)
+
+    upcoming_buses = []
+    for text in schedule:
+        time_match = re.match(r'(\d{1,2}:\d{2})', text)
+        if time_match:
+            bus_time = datetime.strptime(time_match.group(1), "%H:%M").time()
+            if current_time_only < bus_time <= cutoff_time_only:
+                upcoming_buses.append(BusInfo(text))
+    return sorted(upcoming_buses)
+
+# Приклад використання:
+current_time = datetime.now().time()
+schedule = ["7:30 (до лік. Ч. Хутір)", "8:00", "8:45 (до вокзалу)", "9:15", "10:00 (до парку)"]  # Приклад розкладу
+upcoming_buses = get_upcoming_buses(current_time, schedule)
+
+for bus in upcoming_buses:
+    print(bus)
 
 
 @bot.message_handler(commands=['statistics'])
@@ -353,4 +400,5 @@ def show_statistics(chat):
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при виведені статистики клієнтів: {e}")
 
+initialize_schedules()
 bot.infinity_polling()
