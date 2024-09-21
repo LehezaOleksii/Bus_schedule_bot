@@ -150,7 +150,7 @@ def bus_941_schedule(chat):
         log_request(chat.from_user.id, username, 'bus_941')
         header_941 = f"---------------<b>941</b>---------------\n{'З Воронькову':<30} {'З Києва':<12}"
         col_width = max(len(item) for sublist in bus_schedule_941 for item in sublist) + 2
-        formatted_schedule = [f"{header_941:<{col_width + 30}}"]
+        formatted_schedule = [f"{header_941:<{col_width +29}}"]
         for row in zip(*bus_schedule_941):
             if not row[0].strip():
                 formatted_schedule.append(f"{' ' * (col_width+18)}{row[1]:<{col_width}}")
@@ -204,7 +204,7 @@ def bus_324_schedule_weekend(chat):
             if not row[0].strip():
                 formatted_schedule.append(f"{' ' * 28}{row[1]:<{col_width}}")
             else:
-                formatted_schedule.append(f"{row[0]:<{col_width + 16}}{row[1]:<{col_width}}")
+                formatted_schedule.append(f"{row[0]:<{col_width + 15}}{row[1]:<{col_width}}")
         formatted_schedule_res = "\n".join(formatted_schedule)
         link = "\n\nПосилання на сайт: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}{link}", parse_mode='HTML')
@@ -224,7 +224,7 @@ def bus_324_schedule_weekday(chat):
             if not row[0].strip():
                 formatted_schedule.append(f"{' ' * 28}{row[1]:<{col_width}}")
             else:
-                formatted_schedule.append(f"{row[0]:<{col_width + 16}}{row[1]:<{col_width}}")
+                formatted_schedule.append(f"{row[0]:<{col_width + 15}}{row[1]:<{col_width}}")
         formatted_schedule_res = "\n".join(formatted_schedule)
         link = "\n\nПосилання на сайт: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}\n{link}", parse_mode='HTML')
@@ -247,7 +247,7 @@ def full_schedule(chat):
 
         header_941 = f"---------------<b>941</b>---------------\n{'З Воронькову':<30} {'З Києва':<12}"
         col_width = max(len(item) for sublist in bus_schedule_941 for item in sublist) + 2
-        formatted_schedule = [f"{header_941:<{col_width + 30}}"]
+        formatted_schedule = [f"{header_941:<{col_width + 29}}"]
         for row in zip(*bus_schedule_941):
             if not row[0].strip():
                 formatted_schedule.append(f"{' ' * (col_width+18)}{row[1]:<{col_width}}")
