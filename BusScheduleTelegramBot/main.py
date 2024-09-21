@@ -143,36 +143,24 @@ def start(chat):
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка: {e}")
 
-def format_schedule(header, schedule, max_col_width):
-    formatted_schedule = [f"{header}"]
-    print(max_col_width)
-    for row in zip(*schedule):
-        if not row[0].strip():
-            print('\nIF')
-            current_length = len(row[1])
-            print(current_length)
-            spaces_needed = max_col_width - current_length
-            print(spaces_needed)
-            formatted_schedule.append(f"{' ' * max(spaces_needed, 0)}{row[1]:<{max_col_width}}")
-        else:
-            print('\nELSE')
-            current_length = len(row[0])
-            print(current_length)
-            spaces_needed = max_col_width - current_length
-            print(spaces_needed)
-            formatted_schedule.append(f"{row[0]:<{max_col_width}}{' ' * max(spaces_needed, 0)}{row[1]:<{max_col_width}}")
-
-    return "\n".join(formatted_schedule)
-
 @bot.message_handler(commands=['bus_941'])
 def bus_941_schedule(chat):
     try:
-        username = chat.from_user.username or "No Username"  # Fallback if no username
+        username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'bus_941')
-        schedule = bus_schedule_941
-        header = f"------------<b>941</b>------------\n{'З Воронькову':<16} {'З Києва':<12}"
-        formatted_schedule_res = format_schedule(header, schedule, max_col_width=16)
-        bot.send_message(chat.chat.id, f"{formatted_schedule_res}", parse_mode='HTML')
+        header_941 = f"---------------<b>941</b>---------------\n{'З Воронькову':<30} {'З Києва':<12}"
+        col_width = max(len(item) for sublist in bus_schedule_941 for item in sublist) + 2
+        formatted_schedule = [f"{header_941:<{col_width + 30}}"]
+        for row in zip(*bus_schedule_941):
+            if not row[0].strip():
+                formatted_schedule.append(f"{' ' * (col_width+18)}{row[1]:<{col_width}}")
+            else:
+                if len(row[0]) == col_width-2:
+                    formatted_schedule.append(f"{row[0]:<{col_width+1}}{row[1]:<{col_width}}")
+                else:
+                    formatted_schedule.append(f"{row[0]:<{col_width+13}}{row[1]:<{col_width}}")
+        formatted_schedule_941_res = "\n".join(formatted_schedule)
+        bot.send_message(chat.chat.id, f"{formatted_schedule_941_res}", parse_mode='HTML')
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при виконанні запиту до розкладу автобусу 941: {e}")
 
@@ -180,33 +168,36 @@ def bus_941_schedule(chat):
 @bot.message_handler(commands=['bus_324'])
 def bus_324_schedule(chat):
     try:
-        username = chat.from_user.username or "No Username"  # Fallback if no username
+        username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'bus_324')
         today = datetime.today().weekday()
-        spaces_between_max_col_width_and_second_col = 0
-        max_col_width = 0
-        if today in [5, 6]:
+        if today in [5, 6]:  # Weekend
             schedule = bus_schedule_324_weekend
-            max_col_width = max(len(item) for sublist in schedule for item in sublist) + spaces_between_max_col_width_and_second_col+2
-            header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<{max_col_width}} {'З Києва':<{max_col_width}}"
-        else:
+            header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<{16}} {'З Києва':<{12}}"
+        else:  # Weekday
             schedule = bus_schedule_324
-            max_col_width = max(len(item) for sublist in schedule for item in sublist) + spaces_between_max_col_width_and_second_col+2
-            header = f"----------<b>324</b>----------\n{'З Процеву':<{max_col_width}} {'З Києва':<{max_col_width}}"
+            header = f"----------<b>324</b>----------\n{'З Процеву':<{16}} {'З Києва':<{12}}"
 
-        formatted_schedule_res = format_schedule(header, schedule, max_col_width)
-        link = "\n\nПосилання на сайт: http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/"
+        col_width = max(len(item) for sublist in schedule for item in sublist) + 2
+        formatted_schedule = [f"{header:<{col_width + 30}}"]
+        for row in zip(*schedule):
+            if not row[0].strip():
+                formatted_schedule.append(f"{' ' * 28}{row[1]:<{col_width}}")
+            else:
+                formatted_schedule.append(f"{row[0]:<{col_width + 15}}{row[1]:<{col_width}}")
+        formatted_schedule_res = "\n".join(formatted_schedule)
+        link = "\n\nПосилання на сайт: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}{link}", parse_mode='HTML')
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при виконанні запиту до розкладу автобусу 324: {e}")
 
 @bot.message_handler(commands=['bus_324_weekend'])
-def bus_324_schedule(chat):
+def bus_324_schedule_weekend(chat):
     try:
-        username = chat.from_user.username or "No Username"  # Fallback if no username
+        username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'bus_324_weekend')
         schedule = bus_schedule_324_weekend
-        header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<16} {'З Києва':<12}"
+        header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<15} {'З Києва':<12}"
         col_width = max(len(item) for sublist in schedule for item in sublist) + 2
         formatted_schedule = [f"{header:<{col_width + 30}}"]
         for row in zip(*schedule):
@@ -215,29 +206,27 @@ def bus_324_schedule(chat):
             else:
                 formatted_schedule.append(f"{row[0]:<{col_width + 16}}{row[1]:<{col_width}}")
         formatted_schedule_res = "\n".join(formatted_schedule)
-        link = "\n\nПосилання на сайт: http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/"
-        bot.send_message(chat.chat.id, f"{formatted_schedule_res}\n{link}", parse_mode='HTML')
+        link = "\n\nПосилання на сайт: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
+        bot.send_message(chat.chat.id, f"{formatted_schedule_res}{link}", parse_mode='HTML')
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 weekend: {e}")
 
 @bot.message_handler(commands=['bus_324_weekday'])
 def bus_324_schedule_weekday(chat):
     try:
-        username = chat.from_user.username or "No Username"  # Fallback if no username
+        username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'bus_324_weekday')
         schedule = bus_schedule_324
-        header = f"----------<b>324</b>----------\n{'З Процеву':<16} {'З Києва':<12}"
+        header = f"----------<b>324</b>----------\n{'З Процеву':<15} {'З Києва':<12}"
         col_width = max(len(item) for sublist in schedule for item in sublist) + 2
         formatted_schedule = [f"{header:<{col_width + 30}}"]
-
         for row in zip(*schedule):
             if not row[0].strip():
                 formatted_schedule.append(f"{' ' * 28}{row[1]:<{col_width}}")
             else:
                 formatted_schedule.append(f"{row[0]:<{col_width + 16}}{row[1]:<{col_width}}")
         formatted_schedule_res = "\n".join(formatted_schedule)
-
-        link = "\n\nПосилання на сайт: http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/"
+        link = "\n\nПосилання на сайт: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}\n{link}", parse_mode='HTML')
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 weekday: {e}")
@@ -245,7 +234,7 @@ def bus_324_schedule_weekday(chat):
 @bot.message_handler(commands=['all'])
 def full_schedule(chat):
     try:
-        username = chat.from_user.username or "No Username"  # Fallback if no username
+        username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'all')
         today = datetime.today().weekday()
 
@@ -256,14 +245,17 @@ def full_schedule(chat):
             schedule_324 = bus_schedule_324
             header_324 = f"----------<b>324</b>----------\n{'З Процеву':<16} {'З Києва':<12}"
 
-        header_941 = f"------------<b>941</b>------------\n{'З Воронькову':<16} {'З Києва':<12}"
+        header_941 = f"---------------<b>941</b>---------------\n{'З Воронькову':<30} {'З Києва':<12}"
         col_width = max(len(item) for sublist in bus_schedule_941 for item in sublist) + 2
         formatted_schedule = [f"{header_941:<{col_width + 30}}"]
         for row in zip(*bus_schedule_941):
             if not row[0].strip():
-                formatted_schedule.append(f"{' ' * 31}{row[1]:<{col_width}}")
+                formatted_schedule.append(f"{' ' * (col_width+18)}{row[1]:<{col_width}}")
             else:
-                formatted_schedule.append(f"{row[0]:<{col_width + 19}}{row[1]:<{col_width}}")
+                if len(row[0]) == col_width-2:
+                    formatted_schedule.append(f"{row[0]:<{col_width+1}}{row[1]:<{col_width}}")
+                else:
+                    formatted_schedule.append(f"{row[0]:<{col_width+13}}{row[1]:<{col_width}}")
         formatted_schedule_941_res = "\n".join(formatted_schedule)
 
         col_width = max(len(item) for sublist in schedule_324 for item in sublist) + 2
@@ -273,10 +265,10 @@ def full_schedule(chat):
             if not row[0].strip():
                 formatted_schedule.append(f"{' ' * 28}{row[1]:<{col_width}}")
             else:
-                formatted_schedule.append(f"{row[0]:<{col_width + 16}}{row[1]:<{col_width}}")
+                formatted_schedule.append(f"{row[0]:<{col_width + 15}}{row[1]:<{col_width}}")
         formatted_schedule_324_res = "\n".join(formatted_schedule)
 
-        link = "\n\nПосилання на сайт для 324: http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/"
+        link = "\n\nПосилання на сайт для 324: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
 
         full_schedule_message = (f"{formatted_schedule_941_res}\n\n{formatted_schedule_324_res}{link}")
         bot.send_message(chat.chat.id, full_schedule_message, parse_mode='HTML')
@@ -286,7 +278,7 @@ def full_schedule(chat):
 @bot.message_handler(commands=['next_buses'])
 def next_buses(chat):
     try:
-        username = chat.from_user.username or "No Username"  # Fallback if no username
+        username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'next_buses')
         kyiv_tz = pytz.timezone('Europe/Kiev')
         now = datetime.now(kyiv_tz)
