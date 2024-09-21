@@ -284,21 +284,18 @@ def next_buses(chat):
         now = datetime.now(kyiv_tz)
         today = datetime.today().weekday()
 
-        # Вибираємо відповідний розклад для 324 в залежності від дня тижня
-        if today in [5, 6]:  # Якщо це субота чи неділя
+        if today in [5, 6]:
             schedule_324 = bus_schedule_324_weekend
         else:
             schedule_324 = bus_schedule_324
 
         schedule_941 = bus_schedule_941
 
-        # Отримуємо найближчі автобуси для кожного маршруту
         upcoming_941_kyiv = get_upcoming_buses(now, schedule_941[1])
         upcoming_941_vornykiv = get_upcoming_buses(now, schedule_941[0])
         upcoming_324_kyiv = get_upcoming_buses(now, schedule_324[1])
         upcoming_324_protsiv = get_upcoming_buses(now, schedule_324[0])
 
-        # Сортуємо автобуси для Києва та Проціву
         kyiv_buses = sorted(
             [(bus.time, '324', bus.description) for bus in upcoming_324_kyiv] +
             [(bus.time, '941', bus.description) for bus in upcoming_941_kyiv],
@@ -311,8 +308,6 @@ def next_buses(chat):
             key=lambda x: x[0]
         )
 
-        # Формуємо повідомлення для відправки
-        header = "-----<b>Найближчі автобуси</b>-----\n"
         formatted_kyiv = "\n".join([
             f"{bus_time.strftime('%H:%M')} - {route} {f'({description})' if description else ''}"
             for bus_time, route, description in kyiv_buses
@@ -322,26 +317,39 @@ def next_buses(chat):
             f"{bus_time.strftime('%H:%M')} - {route} {f'({description})' if description else ''}"
             for bus_time, route, description in protsiv_buses
         ])
-        # Додаємо порожні строки для вирівнювання, якщо списки різної довжини
-        max_lines = max(len(formatted_kyiv.split("\n")), len(formatted_protsiv.split("\n")))
-        formatted_kyiv_lines = formatted_kyiv.split("\n") + [""] * (max_lines - len(formatted_kyiv.split("\n")))
-        formatted_protsiv_lines = formatted_protsiv.split("\n") + [""] * (max_lines - len(formatted_protsiv.split("\n")))
+        if any("(до лік. Ч. Хутір)" in line for line in formatted_protsiv.split("\n")):
+            header = "----------<b>Найближчі автобуси</b>----------\n"
+            header2="<b>З Села</b>                                          <b>З Києва</b>"
+            max_lines = max(len(formatted_kyiv.split("\n")), len(formatted_protsiv.split("\n")))
+            formatted_kyiv_lines = formatted_kyiv.split("\n") + [""] * (max_lines - len(formatted_kyiv.split("\n")))
+            formatted_protsiv_lines = formatted_protsiv.split("\n") + [""] * (
+                        max_lines - len(formatted_protsiv.split("\n")))
 
-        # Об'єднуємо строки для відправки
-        combined_schedule = "\n".join([
-            f"{protsiv_line:<24} {kyiv_line if not protsiv_line.endswith('941') else ' ' + kyiv_line}"
-            if protsiv_line.strip()
-            else f"{' ':<33} {kyiv_line}"
-            for protsiv_line, kyiv_line in zip(formatted_protsiv_lines, formatted_kyiv_lines)
-        ])
+            combined_schedule = "\n".join([
+                f"{protsiv_line:<33} {kyiv_line if not protsiv_line.endswith('941') else ' ' + kyiv_line}"
+                if protsiv_line.strip()
+                else f"{' ':<33} {kyiv_line}"
+                for protsiv_line, kyiv_line in zip(formatted_protsiv_lines, formatted_kyiv_lines)
+            ])
+        else:
+            header = "-----<b>Найближчі автобуси</b>-----\n"
+            header2="<b>З Села</b>                     <b>З Києва</b>"
+            max_lines = max(len(formatted_kyiv.split("\n")), len(formatted_protsiv.split("\n")))
+            formatted_kyiv_lines = formatted_kyiv.split("\n") + [""] * (max_lines - len(formatted_kyiv.split("\n")))
+            formatted_protsiv_lines = formatted_protsiv.split("\n") + [""] * (
+                        max_lines - len(formatted_protsiv.split("\n")))
 
-        # Додаємо посилання
-        link = "\n\nПосилання на сайт для 324: http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/"
+            combined_schedule = "\n".join([
+                f"{protsiv_line:<24} {kyiv_line if not protsiv_line.endswith('941') else ' ' + kyiv_line}"
+                if protsiv_line.strip()
+                else f"{' ':<33} {kyiv_line}"
+                for protsiv_line, kyiv_line in zip(formatted_protsiv_lines, formatted_kyiv_lines)
+            ])
 
-        # Відправляємо повідомлення
+        link = "\n\nПосилання на сайт для 324: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
         bot.send_message(
             chat.chat.id,
-            f"{header}\n<b>З Села</b>                     <b>З Києва</b>\n{combined_schedule}{link}",
+            f"{header}\n{header2}\n{combined_schedule}{link}",
             parse_mode='HTML'
         )
     except Exception as e:
@@ -352,7 +360,6 @@ def parse_time(time_str):
 
 def format_time(time_obj):
     return time_obj.strftime("%H:%M")
-
 
 def get_upcoming_buses(current_time, schedule):
     kyiv_tz = pytz.timezone('Europe/Kiev')
