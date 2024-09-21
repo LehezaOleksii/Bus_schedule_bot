@@ -6,13 +6,19 @@ from io import BytesIO
 import pytz
 import re
 import signal
-
+import sys
 
 bot = telebot.TeleBot('7052131672:AAHEs6hOG_27apuoHFVyq81CdfXPn_Yx_WI')
 ADMIN_ID = 818757464
 users = {}
 request_count = 0
 current_route = None
+# Local
+file_path_schedule = r'C:\Users\serge\Oleksii\university\bots\bus_schedule\schedules.xlsx'
+file_path_photo_941= r'C:\Users\serge\Oleksii\university\bots\bus_schedule\941_photo.jpg'
+# pythonanywhere
+# file_path_schedule = '/home/OleksiiLeheza12/bot/schedules.xlsx'
+# file_path_photo_941= '/home/OleksiiLeheza12/bot/941_photo.jpg'
 
 bus_schedule_941 = [
 ]
@@ -45,11 +51,7 @@ class BusInfo:
 def initialize_schedules():
     global bus_schedule_941, bus_schedule_324, bus_schedule_324_weekend
     try:
-        #Local
-        file_path = r'C:\Users\serge\Oleksii\university\bots\bus_schedule\schedules.xlsx'
-        #pythonanywhere
-        # file_path = '/home/OleksiiLeheza12/bot/schedules.xlsx'
-        df = pd.read_excel(file_path, sheet_name=None)
+        df = pd.read_excel(file_path_schedule, sheet_name=None)
 
         bus_schedule_941_df = df['941']
         bus_schedule_324_df = df['324_weekday']
@@ -406,6 +408,32 @@ def show_statistics(chat):
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при виведені статистики клієнтів: {e}")
 
+@bot.message_handler(commands=['photo_941'])
+def show_941_schedule_photo(chat):
+    try:
+        with open(file_path_photo_941, 'rb') as photo:
+            bot.send_photo(chat.chat.id, photo)
+    except Exception as e:
+        bot.send_message(chat.chat.id, f"Помилка при завантаженні фото: {e}")
+
+@bot.message_handler(commands=['info'])
+def info (chat):
+    try:
+        bot.send_message(chat.chat.id,"/next_buses - Розклад на наступні 2 години для 941 та 324\n\n"
+                       "/all - Розклад 941 та 324. \n324 має розклад на будні та вихідіні, розклад автомтаично підлаштовується під сьогоднішній день.\n"
+                        "Знизу надсилається посилання на сайт з розкладом 324 автобусу \n\n"
+                       "/bus_941 - Розклад 941\n\n"
+                       "/bus_324 - Розклад 324\n324 має розклад на будні та вихідіні, розклад автомтаично підлаштовується під сьогоднішній день.\n"
+                                      "Знизу надсилається посилання на сайт з розкладом 324 автобусу\n\n"
+                       "/bus_324_weekend - Розклад 324 у вихідні\n"
+                                      "Знизу надсилається посилання на сайт з розкладом 324 автобусу\n\n"
+                       "/bus_324_weekday - Розклад 324 у будні\n"
+                                      "Знизу надсилається посилання на сайт з розкладом 324 автобусу\n\n"
+                       "/photo_941 - Розклад 941 у jpg форматі\n\n"
+                       "/info - детальна інформація про можливості бота\n\n")
+    except Exception as e:
+        bot.send_message(chat.chat.id, f"Помилка при надсиланні детальної інформаціїї: {e}")
+
 initialize_schedules()
 
 def send_shutdown_message():
@@ -413,6 +441,7 @@ def send_shutdown_message():
 
 def signal_handler(sig, frame):
     send_shutdown_message()
+    sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
