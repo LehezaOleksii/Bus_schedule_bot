@@ -7,11 +7,11 @@ import pytz
 import re
 import signal
 import sys
+import os
 
 bot = telebot.TeleBot('7052131672:AAHEs6hOG_27apuoHFVyq81CdfXPn_Yx_WI')
 ADMIN_ID = 818757464
 users = {}
-request_count = 0
 current_route = None
 # Local
 file_path_schedule = r'C:\Users\serge\Oleksii\university\bots\bus_schedule\schedules.xlsx'
@@ -28,6 +28,7 @@ bus_schedule_324 = [
 
 bus_schedule_324_weekend = [
 ]
+statistics_file = "client_statistics.txt"
 
 class BusInfo:
     def __init__(self, text):
@@ -166,8 +167,8 @@ def format_schedule(header, schedule, max_col_width):
 @bot.message_handler(commands=['bus_941'])
 def bus_941_schedule(chat):
     try:
-        global request_count
-        request_count += 1
+        username = chat.from_user.username or "No Username"  # Fallback if no username
+        log_request(chat.from_user.id, username, 'bus_941')
         schedule = bus_schedule_941
         header = f"------------<b>941</b>------------\n{'З Воронькову':<16} {'З Києва':<12}"
         formatted_schedule_res = format_schedule(header, schedule, max_col_width=16)
@@ -179,8 +180,8 @@ def bus_941_schedule(chat):
 @bot.message_handler(commands=['bus_324'])
 def bus_324_schedule(chat):
     try:
-        global request_count
-        request_count += 1
+        username = chat.from_user.username or "No Username"  # Fallback if no username
+        log_request(chat.from_user.id, username, 'bus_324')
         today = datetime.today().weekday()
         spaces_between_max_col_width_and_second_col = 0
         max_col_width = 0
@@ -202,8 +203,8 @@ def bus_324_schedule(chat):
 @bot.message_handler(commands=['bus_324_weekend'])
 def bus_324_schedule(chat):
     try:
-        global request_count
-        request_count += 1
+        username = chat.from_user.username or "No Username"  # Fallback if no username
+        log_request(chat.from_user.id, username, 'bus_324_weekend')
         schedule = bus_schedule_324_weekend
         header = f"------<b>324(Вихідні)</b>------\n{'З Процеву':<16} {'З Києва':<12}"
         col_width = max(len(item) for sublist in schedule for item in sublist) + 2
@@ -222,8 +223,8 @@ def bus_324_schedule(chat):
 @bot.message_handler(commands=['bus_324_weekday'])
 def bus_324_schedule_weekday(chat):
     try:
-        global request_count
-        request_count += 1
+        username = chat.from_user.username or "No Username"  # Fallback if no username
+        log_request(chat.from_user.id, username, 'bus_324_weekday')
         schedule = bus_schedule_324
         header = f"----------<b>324</b>----------\n{'З Процеву':<16} {'З Києва':<12}"
         col_width = max(len(item) for sublist in schedule for item in sublist) + 2
@@ -244,8 +245,8 @@ def bus_324_schedule_weekday(chat):
 @bot.message_handler(commands=['all'])
 def full_schedule(chat):
     try:
-        global request_count
-        request_count += 1
+        username = chat.from_user.username or "No Username"  # Fallback if no username
+        log_request(chat.from_user.id, username, 'all')
         today = datetime.today().weekday()
 
         if today in [5, 6]:
@@ -285,8 +286,8 @@ def full_schedule(chat):
 @bot.message_handler(commands=['next_buses'])
 def next_buses(chat):
     try:
-        global request_count
-        request_count += 1
+        username = chat.from_user.username or "No Username"  # Fallback if no username
+        log_request(chat.from_user.id, username, 'next_buses')
         kyiv_tz = pytz.timezone('Europe/Kiev')
         now = datetime.now(kyiv_tz)
         today = datetime.today().weekday()
@@ -379,34 +380,69 @@ def get_upcoming_buses(current_time, schedule):
                 upcoming_buses.append(BusInfo(text))
     return sorted(upcoming_buses)
 
-# Приклад використання:
-current_time = datetime.now().time()
-schedule = ["7:30 (до лік. Ч. Хутір)", "8:00", "8:45 (до вокзалу)", "9:15", "10:00 (до парку)"]  # Приклад розкладу
-upcoming_buses = get_upcoming_buses(current_time, schedule)
+if not os.path.exists(statistics_file):
+    with open(statistics_file, 'w') as f:
+        f.write("User ID, Command, Timestamp\n")
 
-for bus in upcoming_buses:
-    print(bus)
+def log_request(user_id, username, command):
+    kyiv_tz = pytz.timezone('Europe/Kiev')
+    timestamp = datetime.now(kyiv_tz).strftime('%Y-%m-%d %H:%M:%S')
+    with open(statistics_file, 'a') as f:
+        f.write(f"{user_id}, {username}, {command}, {timestamp}\n")
+
+def read_statistics():
+    statistics = {
+        'total_requests': 0,
+        'client_requests': {},
+        'command_requests': {}
+    }
+
+    with open(statistics_file, 'r') as f:
+        next(f)
+        for line in f:
+            user_id, username, command, timestamp = line.strip().split(", ")
+            statistics['total_requests'] += 1
+            if user_id not in statistics['client_requests']:
+                statistics['client_requests'][user_id] = {
+                    'username': username,
+                    'count': 0,
+                    'commands': {}
+                }
+            statistics['client_requests'][user_id]['count'] += 1
+            if command not in statistics['command_requests']:
+                statistics['command_requests'][command] = 0
+            statistics['command_requests'][command] += 1
+            if command not in statistics['client_requests'][user_id]['commands']:
+                statistics['client_requests'][user_id]['commands'][command] = 0
+            statistics['client_requests'][user_id]['commands'][command] += 1
+
+    return statistics
 
 
-@bot.message_handler(commands=['statistics'])
+@bot.message_handler(commands=['stats'])
 def show_statistics(chat):
     try:
         if chat.from_user.id == ADMIN_ID:
-            total_users = len(users)
-            total_requests = request_count
-            user_list = "\n".join([f"Username: {username}, ID: {user_id}" for user_id, username in users.items()])
-            if not user_list:
-                user_list = "Користувачі відсутні."
-            bot.send_message(chat.chat.id,
-                             f"<b>Статистика:</b>\n"
-                             f"Кількість запитів: {total_requests}\n"
-                             f"Кількість користувачів: {total_users}\n"
-                             f"Список користувачів:\n{user_list}\n",
-                             parse_mode='HTML')
+            statistics = read_statistics()
+            total_requests = statistics['total_requests']
+            client_requests = statistics['client_requests']
+            command_requests = statistics['command_requests']
+            response = f"Загальна кількість запитів: {total_requests}\n\nКлієнти:\n"
+            for user_id, data in client_requests.items():
+                most_used_command = max(data['commands'], key=data['commands'].get) if data['commands'] else "None"
+                most_used_count = data['commands'].get(most_used_command, 0) if most_used_command != "None" else 0
+                response += (f"- {data['username']} (ID: {user_id}): {data['count']} запитів, "
+                             f"Улюблений запит: {most_used_command} (використно {most_used_count} рази)\n")
+
+            response += "\nСтатистика по запитам:\n"
+            for command, count in command_requests.items():
+                response += f"- {command}: {count} разів\n"
+
+            bot.send_message(chat.chat.id, response)
         else:
             bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди.")
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виведені статистики клієнтів: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виведенні статистики: {e}")
 
 @bot.message_handler(commands=['photo_941'])
 def show_941_schedule_photo(chat):
@@ -415,24 +451,6 @@ def show_941_schedule_photo(chat):
             bot.send_photo(chat.chat.id, photo)
     except Exception as e:
         bot.send_message(chat.chat.id, f"Помилка при завантаженні фото: {e}")
-
-@bot.message_handler(commands=['info'])
-def info (chat):
-    try:
-        bot.send_message(chat.chat.id,"/next_buses - Розклад на наступні 2 години для 941 та 324\n\n"
-                       "/all - Розклад 941 та 324. \n324 має розклад на будні та вихідіні, розклад автомтаично підлаштовується під сьогоднішній день.\n"
-                        "Знизу надсилається посилання на сайт з розкладом 324 автобусу \n\n"
-                       "/bus_941 - Розклад 941\n\n"
-                       "/bus_324 - Розклад 324\n324 має розклад на будні та вихідіні, розклад автомтаично підлаштовується під сьогоднішній день.\n"
-                                      "Знизу надсилається посилання на сайт з розкладом 324 автобусу\n\n"
-                       "/bus_324_weekend - Розклад 324 у вихідні\n"
-                                      "Знизу надсилається посилання на сайт з розкладом 324 автобусу\n\n"
-                       "/bus_324_weekday - Розклад 324 у будні\n"
-                                      "Знизу надсилається посилання на сайт з розкладом 324 автобусу\n\n"
-                       "/photo_941 - Розклад 941 у jpg форматі\n\n"
-                       "/info - детальна інформація про можливості бота\n\n")
-    except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при надсиланні детальної інформаціїї: {e}")
 
 initialize_schedules()
 
