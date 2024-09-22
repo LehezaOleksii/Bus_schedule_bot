@@ -322,7 +322,7 @@ def next_buses(chat):
             combined_schedule = "\n".join([
                 f"{protsiv_line:<32}{kyiv_line}" if protsiv_line.endswith("Хутір)") else f"{protsiv_line:<44}{kyiv_line if not protsiv_line.endswith('941') else ' ' + kyiv_line}"
                 if protsiv_line.strip()
-                else f"{' ':<40} {kyiv_line}"
+                else f"{' ':<52} {kyiv_line}"
                 for protsiv_line, kyiv_line in zip(formatted_protsiv_lines, formatted_kyiv_lines)
             ])
         else:
@@ -336,7 +336,7 @@ def next_buses(chat):
             combined_schedule = "\n".join([
                 f"{protsiv_line:<24} {kyiv_line if not protsiv_line.endswith('941') else ' ' + kyiv_line}"
                 if protsiv_line.strip()
-                else f"{' ':<40} {kyiv_line}"
+                else f"{' ':<33} {kyiv_line}"
                 for protsiv_line, kyiv_line in zip(formatted_protsiv_lines, formatted_kyiv_lines)
             ])
 
