@@ -143,7 +143,7 @@ def bus_941_schedule(chat):
     try:
         username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'bus_941')
-        header_941 = f"---------------<b>941</b>---------------\n{'<b>З Воронькову</b>':<30} {'<b>З Києва</b>':<12}"
+        header_941 = f"---------------<b>941</b>---------------\n{'<b>З Воронькову</b>':<36} {'<b>З Києва</b>':<12}"
         col_width = max(len(item) for sublist in bus_schedule_941 for item in sublist) + 2
         formatted_schedule = [f"{header_941:<{col_width +29}}"]
         for row in zip(*bus_schedule_941):
@@ -168,10 +168,10 @@ def bus_324_schedule(chat):
         today = datetime.today().weekday()
         if today in [5, 6]:  # Weekend
             schedule = bus_schedule_324_weekend
-            header = f"------<b>324(Вихідні)</b>------\n{'<b>З Процеву</b>':<{16}} {'<b>З Києва</b>':<{12}}"
+            header = f"------<b>324(Вихідні)</b>------\n{'<b>З Процеву</b>':<{22}} {'<b>З Києва</b>':<{12}}"
         else:  # Weekday
             schedule = bus_schedule_324
-            header = f"----------<b>324</b>----------\n{'<b>З Процеву</b>':<{16}} {'<b>З Києва</b>':<{12}}"
+            header = f"----------<b>324</b>----------\n{'<b>З Процеву</b>':<{21}} {'<b>З Києва</b>':<{12}}"
 
         col_width = max(len(item) for sublist in schedule for item in sublist) + 2
         formatted_schedule = [f"{header:<{col_width + 30}}"]
@@ -192,7 +192,7 @@ def bus_324_schedule_weekend(chat):
         username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'bus_324_weekend')
         schedule = bus_schedule_324_weekend
-        header = f"------<b>324(Вихідні)</b>------\n{'<b>З Процеву</b>':<15} {'<b>З Києва</b>':<12}"
+        header = f"------<b>324(Вихідні)</b>------\n{'<b>З Процеву</b>':<22} {'<b>З Києва</b>':<12}"
         col_width = max(len(item) for sublist in schedule for item in sublist) + 2
         formatted_schedule = [f"{header:<{col_width + 30}}"]
         for row in zip(*schedule):
@@ -212,7 +212,7 @@ def bus_324_schedule_weekday(chat):
         username = chat.from_user.username or "No Username"
         log_request(chat.from_user.id, username, 'bus_324_weekday')
         schedule = bus_schedule_324
-        header = f"----------<b>324</b>----------\n{'<b>З Процеву</b>':<15} {'<b>З Києва</b>':<12}"
+        header = f"----------<b>324</b>----------\n{'<b>З Процеву</b>':<21} {'<b>З Києва</b>':<12}"
         col_width = max(len(item) for sublist in schedule for item in sublist) + 2
         formatted_schedule = [f"{header:<{col_width + 30}}"]
         for row in zip(*schedule):
@@ -235,12 +235,12 @@ def full_schedule(chat):
 
         if today in [5, 6]:
             schedule_324 = bus_schedule_324_weekend
-            header_324 = f"------<b>324(Вихідні)</b>------\n{'<b>З Процеву</b>':<16} {'<b>З Києва</b>':<12}"
+            header_324 = f"------<b>324(Вихідні)</b>------\n{'<b>З Процеву</b>':<22} {'<b>З Києва</b>':<12}"
         else:
             schedule_324 = bus_schedule_324
-            header_324 = f"----------<b>324</b>----------\n{'<b>З Процеву</b>':<16} {'<b>З Києва</b>':<12}"
+            header_324 = f"----------<b>324</b>----------\n{'<b>З Процеву</b>':<22} {'<b>З Києва</b>':<12}"
 
-        header_941 = f"---------------<b>941</b>---------------\n{'<b>З Воронькову</b>':<30} {'<b>З Києва</b>':<12}"
+        header_941 = f"---------------<b>941</b>---------------\n{'<b>З Воронькову</b>':<35} {'<b>З Києва</b>':<12}"
         col_width = max(len(item) for sublist in bus_schedule_941 for item in sublist) + 2
         formatted_schedule = [f"{header_941:<{col_width + 29}}"]
         for row in zip(*bus_schedule_941):
