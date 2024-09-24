@@ -13,11 +13,11 @@ bot = telebot.TeleBot('7052131672:AAHEs6hOG_27apuoHFVyq81CdfXPn_Yx_WI')
 ADMIN_ID = 818757464
 current_route = None
 # Local
-file_path_schedule = r'C:\Users\serge\Oleksii\university\bots\bus_schedule\schedules.xlsx'
-file_path_photo_941= r'C:\Users\serge\Oleksii\university\bots\bus_schedule\941_photo.jpg'
+# file_path_schedule = r'C:\Users\serge\Oleksii\university\bots\bus_schedule\schedules.xlsx'
+# file_path_photo_941= r'C:\Users\serge\Oleksii\university\bots\bus_schedule\941_photo.jpg'
 # pythonanywhere
-# file_path_schedule = '/home/OleksiiLeheza12/bot/schedules.xlsx'
-# file_path_photo_941= '/home/OleksiiLeheza12/bot/941_photo.jpg'
+file_path_schedule = '/home/OleksiiLeheza12/bot/schedules.xlsx'
+file_path_photo_941= '/home/OleksiiLeheza12/bot/941_photo.jpg'
 
 bus_schedule_941 = [
 ]
@@ -425,7 +425,7 @@ def show_statistics(chat):
                 most_used_command = max(data['commands'], key=data['commands'].get) if data['commands'] else "None"
                 most_used_count = data['commands'].get(most_used_command, 0) if most_used_command != "None" else 0
                 response += (f"- {data['username']} (ID: {user_id}): {data['count']} запитів, "
-                             f"Улюблений запит: {most_used_command} ({most_used_count} рази)\n")
+                             f"Улюблений запит: {most_used_command} ({most_used_count} рази)\n\n")
 
             response += "\nСтатистика по запитам:\n"
             for command, count in command_requests.items():
