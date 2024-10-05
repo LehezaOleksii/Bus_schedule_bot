@@ -63,7 +63,7 @@ def initialize_schedules():
 
         print("Schedules initialized successfully.")
     except Exception as e:
-        print(f"Error initializing schedules: {e}")
+        print(f"Error initializing schedules")
 
 def clean_row(row):
     return [value if not pd.isna(value) else '' for value in row]
@@ -81,7 +81,7 @@ def change_schedule(chat):
         else:
             bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди.")
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при оновлені даних: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при оновлені даних")
 
 @bot.message_handler(func=lambda message: message.text in ['941 all', '324 weekday', '324 weekend'])
 def route_selected(chat):
@@ -93,7 +93,7 @@ def route_selected(chat):
         else:
             bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди.")
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при оновлені даних: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при оновлені даних")
 
 @bot.message_handler(content_types=['document'])
 def handle_document(chat):
@@ -109,13 +109,13 @@ def handle_document(chat):
                 update_schedule(df, current_route)
                 bot.send_message(chat.chat.id, f"Розклад для {current_route} успішно оновлено.")
             except Exception as e:
-                bot.send_message(chat.chat.id, f"Помилка при оновлені даних: {e}")
+                bot.send_message(chat.chat.id, f"Помилка при оновлені даних")
 
             current_route = None
         else:
             bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди або маршрут не обрано.")
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при оновлені даних при роботі з документами: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при оновлені даних при роботі з документами")
 
 def update_schedule(df, route):
     def clean_row(row):
@@ -136,7 +136,7 @@ def start(chat):
     try:
         bot.send_message(chat.chat.id, 'Бот розпочав роботу. Доступні функції перегляду розкладу автобусів')
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка: {e}")
+        bot.send_message(chat.chat.id, f"Помилка")
 
 @bot.message_handler(commands=['bus_941'])
 def bus_941_schedule(chat):
@@ -157,7 +157,7 @@ def bus_941_schedule(chat):
         formatted_schedule_941_res = "\n".join(formatted_schedule)
         bot.send_message(chat.chat.id, f"{formatted_schedule_941_res}", parse_mode='HTML')
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виконанні запиту до розкладу автобусу 941: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виконанні запиту до розкладу автобусу 941")
 
 
 @bot.message_handler(commands=['bus_324'])
@@ -184,7 +184,7 @@ def bus_324_schedule(chat):
         link = "\n\nПосилання на сайт: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}{link}", parse_mode='HTML')
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виконанні запиту до розкладу автобусу 324: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виконанні запиту до розкладу автобусу 324")
 
 @bot.message_handler(commands=['bus_324_weekend'])
 def bus_324_schedule_weekend(chat):
@@ -204,7 +204,7 @@ def bus_324_schedule_weekend(chat):
         link = "\n\nПосилання на сайт: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}{link}", parse_mode='HTML')
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 weekend: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 weekend")
 
 @bot.message_handler(commands=['bus_324_weekday'])
 def bus_324_schedule_weekday(chat):
@@ -224,7 +224,7 @@ def bus_324_schedule_weekday(chat):
         link = "\n\nПосилання на сайт: <a href='http://avto-servis.com.ua/avtobusn-marshruti/marshrut-324/'>Деталі</a>"
         bot.send_message(chat.chat.id, f"{formatted_schedule_res}\n{link}", parse_mode='HTML')
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 weekday: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 weekday")
 
 @bot.message_handler(commands=['all'])
 def full_schedule(chat):
@@ -268,7 +268,7 @@ def full_schedule(chat):
         full_schedule_message = (f"{formatted_schedule_941_res}\n\n{formatted_schedule_324_res}{link}")
         bot.send_message(chat.chat.id, full_schedule_message, parse_mode='HTML')
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 all: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу 324 all")
 
 @bot.message_handler(commands=['next_buses'])
 def next_buses(chat):
@@ -347,7 +347,7 @@ def next_buses(chat):
             parse_mode='HTML'
         )
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу next_buses: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виконання запиту до розкладу автобусу next_buses")
 
 def parse_time(time_str):
     return datetime.strptime(time_str, "%H:%M").time()
@@ -435,7 +435,7 @@ def show_statistics(chat):
         else:
             bot.send_message(chat.chat.id, "У вас немає доступу до цієї команди.")
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при виведенні статистики: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при виведенні статистики")
 
 @bot.message_handler(commands=['photo_941'])
 def show_941_schedule_photo(chat):
@@ -443,7 +443,7 @@ def show_941_schedule_photo(chat):
         with open(file_path_photo_941, 'rb') as photo:
             bot.send_photo(chat.chat.id, photo)
     except Exception as e:
-        bot.send_message(chat.chat.id, f"Помилка при завантаженні фото: {e}")
+        bot.send_message(chat.chat.id, f"Помилка при завантаженні фото")
 
 initialize_schedules()
 
